@@ -16,13 +16,15 @@ library("RCurl")
 
 ### Load Data
 ```{r}
-url <- getURL("https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data")
+url <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/agaricus-lepiota.data.txt")
 data <- read.csv(textConnection(url), header = FALSE, sep = ",", stringsAsFactors = FALSE)
 ```
 
 ### Rename Columns
 ```{r}
 colnames(data) <- c("class", "cap-shape", "cap-surface", "cap-color", "bruises?", "odor", "gill-attachment", "gill-spacing", "gill-size", "gill-color", "stalk-shape", "stalk-root", "stalk-surface-above-ring", "stalk-surface-below-ring", "stalk-color-above-ring", "stalk-color-below-ring", "veil-type", "veil-color", "ring-number", "ring-type", "spore-print-color", "population", "habitat")
+
+summary(data)
 ```
 
 ### Subset Data & Transform Data
@@ -34,4 +36,7 @@ mini <- data %>%
   mutate(shape = recode(shape, b = "bell", c = "conical", x = "convex", f = "flat", k = "knobbed", s = "sunken")) %>%
   mutate(color = recode(color, n = "brown", b = "buff", c = "cinnamon", g = "gray", r = "green", p = "pink", u = "purple", e = "red", w = "white", y = "yellow")) %>%
   mutate(odor = recode(odor, a = "almond", l = "anise", c = "creosote", y = "fishy", f = "foul", m = "musty", n = "none", p = "pungent", s = "spicy"))
+
+head(mini, 10)
+tail(mini, 10)
 ```
