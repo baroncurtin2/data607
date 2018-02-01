@@ -1,0 +1,37 @@
+---
+title: "Data 607 - Week1"
+author: "Baron Curtin"
+date: "January 31, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("dplyr")
+library("tidyr")
+library("magrittr")
+library("RCurl")
+```
+
+
+### Load Data
+```{r}
+url <- getURL("https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data")
+data <- read.csv(textConnection(url), header = FALSE, sep = ",", stringsAsFactors = FALSE)
+```
+
+### Rename Columns
+```{r}
+colnames(data) <- c("class", "cap-shape", "cap-surface", "cap-color", "bruises?", "odor", "gill-attachment", "gill-spacing", "gill-size", "gill-color", "stalk-shape", "stalk-root", "stalk-surface-above-ring", "stalk-surface-below-ring", "stalk-color-above-ring", "stalk-color-below-ring", "veil-type", "veil-color", "ring-number", "ring-type", "spore-print-color", "population", "habitat")
+```
+
+### Subset Data & Transform Data
+```{r}
+mini <- data %>%
+  select("class", "cap-shape", "cap-color", "odor") %>%
+  rename(safe.to.eat = "class", shape = "cap-shape", color = "cap-color") %>%
+  mutate(safe.to.eat = recode(safe.to.eat, e = "edible", p = "poisonous")) %>%
+  mutate(shape = recode(shape, b = "bell", c = "conical", x = "convex", f = "flat", k = "knobbed", s = "sunken")) %>%
+  mutate(color = recode(color, n = "brown", b = "buff", c = "cinnamon", g = "gray", r = "green", p = "pink", u = "purple", e = "red", w = "white", y = "yellow")) %>%
+  mutate(odor = recode(odor, a = "almond", l = "anise", c = "creosote", y = "fishy", f = "foul", m = "musty", n = "none", p = "pungent", s = "spicy"))
+```
