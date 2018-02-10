@@ -1,0 +1,44 @@
+---
+title: "Data607-Week2"
+author: "Baron Curtin"
+date: "February 9, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Environment Setup
+```{r envsetup, echo=FALSE}
+library(tidyverse)
+library(RCurl)
+library(magrittr)
+library(ggplot2)
+```
+
+
+## Load CSV Data
+```{r dataload}
+data <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/ratings.csv") %>%
+  read_csv() %>%
+  data.frame(stringsAsFactors = FALSE)
+```
+
+## Data Wrangling
+```{r wrangling}
+# the data is currently very wide. one of the fundamentals of data is to arrange the data such that each variable is in a column, each observation is a row, and each value is a cell
+
+tidydata <- data %>%
+  gather(movie, rating, -name, na.rm = TRUE) %>%
+  arrange(name, movie)
+```
+
+## Data Visualization
+```{r visuals}
+# lets make some boxplots for fun
+ggplot(data = tidydata, aes(x = movie, y = rating, col = movie)) +
+  geom_boxplot()
+```
+
+Just for fun, we can conclude that Get Out was the highest rated movie amongst this sample. It also experienced the least deviation from the median/mean as evidenced by boxplot.
