@@ -1,0 +1,98 @@
+---
+title: "Data607 - Week3"
+author: "Baron Curtin"
+date: "February 13, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Environment Setup
+
+```{r env, echo=FALSE}
+library(tidyverse)
+library(magrittr)
+raw.data <-"555-1239Moe Szyslak(636) 555-0113Burns, C. Montgomery555-6542Rev. Timothy Lovejoy555 8904Ned Flanders636-555-3226Simpson, Homer5553642Dr. Julius Hibbert"
+names <- raw.data %>%
+  str_extract_all('[[:alpha:]., \\.]{2,}') %>%
+  unlist %>%
+  print
+phone <- raw.data %>%
+  str_extract_all("\\(?(\\d{3})?\\)?(-| )?\\d{3}(-| )?\\d{4}") %>%
+  unlist %>%
+  print
+```
+
+## 1.) Rearrage the vector so all the elements conform to first_name last_name.
+```{r one}
+# remove salutations, prefixes, swap positions, and trim
+swappedNames <- names %>%
+  str_replace("[A-z]+\\.\\s", " ") %>%
+  str_replace("(\\w+),\\s+(\\w+)", "\\2 \\1") %>%
+  str_trim %>%
+  print
+
+# put data in data frame for easier viewing
+df <- data_frame(swappedNames = swappedNames, phone = phone) %>%
+  print
+```
+
+## 2.) Logical vector indicating whether a character has a title
+```{r two}
+# detect titles
+title <- names %>%
+  str_detect("[A-z]{2,3}\\.\\s*")
+
+# put names and true/false vector in data frame
+titles <- data_frame(names = names, titles = title) %>%
+  print
+```
+
+## 3.) Logical vector indicating whether a character has a second name
+```{r three}
+# detect second name
+twoNames <- names %>%
+  str_detect("[A-Z]{1}\\.")
+
+# put names and true/false vector in data frame
+twoNameDf <- data_frame(names = names, twoNames = twoNames) %>%
+  print
+```
+
+## 4.) Describe the types of strings that conform to the following regular expressions and construct an example that is matched by the regular expression.
+* a.) [0-9]+\\$ - Select digits 0-9 one or more times, followed by a $
+* b.) \\b[a-z]{1,4}\\b - Word boundaries, [a-z] 1-4x, Word boundaries
+* c.) .*?\\.txt$ - Select files/file paths that have a text extension
+* d.) \\d{2}/\\d{d}/\\d{4} - 2 digits/2 digits/4 digits (date format)
+* e.) <(.+?)>.+?</\\1> - Used to find HTML code
+```{r four}
+qs <- c("4a", "4b", "4c", "4d", "4e")
+test_str <- c("4$",
+              "baron curtin bac curtin,baron",
+              "C:/Users/ProblemX/OneDrive/Documents/Cuny SPS/Data 607/Week3/helloText.txt",
+              "02/13/2018",
+              "<span>Span tag</span>")
+pats <- c("[0-9]+\\$", 
+          "\\b[a-z]{1,4}\\b",
+          ".*?\\.txt$",
+          "\\d{2}/\\d{d}/\\d{4}",
+          "<(.+?)>.+?</\\1>")
+
+data_frame(patterns = pats, testStrings = test_str) %>%
+  print
+```
+
+## 9.) The following code hides a secret message
+```{r nine}
+code <- "clcopCow1zmstc0d87wnkig7OvdicpNuggvhryn92Gjuwczi8hqrfpRxs5Aj5dwpn0TanwoUwisdij7Lj8kpf03AT5Idr3coc0bt7yczjatOaootj55t3Nj3ne6c4Sfek.r1w1YwwojigOd6vrfUrbz2.2bkAnbhzgv4R9i05zEcrop.wAgnb.SqoU65fPa1otfb7wEm24k6t3sR9zqe5fy89n6Nd5t9kc4fE905gmc4Rgxo5nhDk!gr"
+
+msg <- code %>%
+  str_extract_all("[[A-Z].]") %>%
+  unlist %>%
+  str_replace_all("[.]", " ") %>%
+  paste(collapse = "") %>%
+  print
+```
+
