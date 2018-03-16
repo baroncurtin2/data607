@@ -1,0 +1,254 @@
+---
+title: "Data 607 - Project2"
+author: "Baron Curtin"
+date: "March 8, 2018"
+output: 
+  html_document:
+    css: ./lab.css
+    highlight: pygments
+    df_print: paged
+    theme: cerulean
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r env, include=FALSE}
+library(tidyverse)
+library(magrittr)
+library(RCurl)
+library(knitr)
+library(kableExtra)
+```
+
+# Datasets {.tabset .tabset-fade}
+
+## Survey Data
+
+1.  ![](https://raw.githubusercontent.com/baroncurtin2/data607/master/project2/chrome_2018-03-09_11-43-15.png)
+  + Objectives:
+    + Tidy datset
+      + Make the data more narrow, i.e. convert each question to a row
+    + Analyze the distributions via boxplot
+
+```{r survey-one, results='hide'}
+# load datset
+url <- "https://raw.githubusercontent.com/baroncurtin2/data607/master/project2/data/survey_data.csv"
+
+survey <- read_csv(url, col_names = TRUE, col_types = NULL, na = c("", "NA")) %>%
+  tbl_df
+
+# view data
+kable(head(survey), caption = "Survey Data", format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+### Tidy our Survey Data
+```{r tidy-survey}
+survey %<>%
+  # gather all of the question columns
+  gather(key = "question", value = "response", -ptid) %>%
+  # rename ptid
+  rename(person_id = ptid) %>%
+  # remove Qs from question
+  mutate(question = str_replace(question, "Q", "")) %>%
+  # sort questions
+  arrange(question)
+
+glimpse(survey)
+
+# group the data by question to get the mean for later analysis
+grouped_survey <- survey %>%
+  group_by(question) %>%
+  summarise(meanQ = mean(response), 
+            sd = sd(response), 
+            abv_mean = sum(response > meanQ),
+            prop_abv_mean = abv_mean / n())
+```
+
+### Visualize Survey Data
+```{r vis-survey}
+ggplot(survey, aes(x = question, y = response, color = question)) +
+  geom_boxplot() +
+  coord_flip() +
+  geom_hline(yintercept = mean(survey$response))
+```
+
+### Conclusions
+```{r}
+abv_mean <- survey %>%
+  filter(response > mean(response)) %>%
+  count
+
+abv_mean/count(survey)
+
+# analyse grouped data
+grouped_survey %>%
+  filter(meanQ == max(meanQ))
+
+grouped_survey %>%
+  filter(prop_abv_mean == max(prop_abv_mean))
+```
+  * 51.9% of all responses are above the mean of the typical response across all questions
+  * Question 8b had the highest mean response value at 3.45
+  * Questions 2 and 6e had the highest proportion of responses above their respective means
+  
+## Time Use Data
+
+2.  ![](https://raw.githubusercontent.com/baroncurtin2/data607/master/project2/chrome_2018-03-09_11-40-58.png)
+  + Objectives:
+    + Tidy datset
+      + Make the data more narrow, i.e. convert each activity to a row
+    + Analyze how males vs females spend their time
+    + Analyze how each countries males and females compare to each other
+    
+```{r timeuse-one, results="hide"}
+# load datset
+url <- "https://raw.githubusercontent.com/baroncurtin2/data607/master/project2/data/time_use.csv"
+# rename headers
+headers <- c("sex","country","total","personal","sleep","eating","other_personal","work_activities","work_travel","employ_activities","study","school_ex_hw","hw","free_study","household_care","food_mgmt","dish_wash","clean_house","house_upkeep","laundry","ironing","handicraft","gardening","tend_animals","pet_care","dog_walk","construction","shopping","childcare","teaching_child","house_mgmt","leisure_time","org_work","other_household_help","participation","feasts","other_social_life","culture","resting","walking_hiking","outdoor_activities","comp_games","computing","hobbies","reading_books","reading_other","tv_video","radio_music","leisure_other","leisure_travel","work_commute","travel_study","travel_shopping","child_chaperone","travel_other_household","travel_sociallife","travel_misc","misc")
+
+# import into tibble
+timeuse <- read_csv(url, col_names = headers, col_types = cols(.default = "c"), na = c("", "NA"), skip = 1) %>%
+  tbl_df()
+
+# view data
+kable(head(timeuse), caption = "Time Use Data", format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+### Tidy Timeuse Data
+```{r tidy-timeuse}
+# helper function to get seconds
+toMinutes <- function(x) {
+  hrs <- str_replace(x, '(\\d+):?(\\d+)', '\\1') %>%
+    as.numeric %>%
+    multiply_by(60)
+  mins <- str_replace(x, '(\\d+):?(\\d+)', '\\2') %>%
+    as.numeric
+  
+  (hrs + mins)
+}
+
+# tidy operations
+timeuse %<>%
+  # select * except total
+  select(-total) %>%
+  # mutate time columns to covert to minutes
+  mutate_at(.vars = vars(personal:misc), toMinutes) %>%
+  # gather all time columns
+  gather(key = "activity", value = "minutes", -(sex:country), na.rm = TRUE) %>%
+  # mutate germany in country column to say only germany
+  mutate(country = if_else(str_detect(country, '^(Germany).+'), 'Germany', country))
+
+glimpse(timeuse)
+```
+
+### Visualize Time Use Data
+```{r vis-timeuse}
+sleep <- timeuse %>%
+  filter(activity == "sleep")
+  
+# sleep data by country
+ggplot(sleep, aes(x = country, y = minutes)) +
+  geom_col(aes(fill = sex)) +
+  theme(axis.text.x = element_text(angle = 45, size = 8)) + 
+  labs(title = 'Sleep Data')
+
+# sleep data by sex
+ggplot(sleep, aes(x = sex, y = minutes)) +
+  geom_col()+ 
+  labs(title = 'Sleep Data')
+```
+
+### Conclusions
+```{r con-timeuse}
+# calculate average sleep times for gender
+sleep %>%
+  group_by(sex) %>%
+  summarise(avg = mean(minutes))
+
+# get total sleep times
+sleep %>%
+  group_by(country) %>%
+  summarise(total = sum(minutes)) %>%
+  arrange(desc(total)) %>%
+  head(5)
+```
+  * On average, women sleep more than men
+  * The top 5 countries that sleep the most are Bulgaria, France, Latvia, Spain, and Lithuania
+  
+## Population Data
+
+3.  ![](https://raw.githubusercontent.com/baroncurtin2/data607/master/project2/chrome_2018-03-10_16-12-29.png)
+  + Objectives:
+    + Tidy datset
+      + Make the data more narrow, i.e. convert each year to a row
+      + Three columns: Country, Year, Population
+    + Analyze growth rate of the past 10 years via line graph
+
+```{r pop-one, results='hide'}
+# load datset
+url <- "https://raw.githubusercontent.com/baroncurtin2/data607/master/project2/data/population.csv"
+
+census <- read_csv(url, col_names = TRUE, col_types = NULL, na = c("", "NA")) %>%
+  tbl_df
+
+# view data
+kable(head(census), caption = "Population Data", format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+### Tidy Population Data
+```{r tidy-pop}
+exclude_list <- c("World", "Asia & Oceania", "Africa", "Europe", "Central & South America", "North America", "Eurasia", "Middle East")
+
+census %<>%
+  # mutate X1 -> country
+  rename(country = X1) %>%
+  # gather all of the year columns
+  gather(key = "year", value = "population", -country) %>%
+  # filter aggregate countries
+  filter(!(country %in% exclude_list)) %>%
+  # replace NA and -- with 0
+  mutate(population = if_else(is.na(population) | (population == "--"), 0, as.double(population))) %>%
+  # sort by country name
+  arrange(country)
+
+glimpse(census)
+
+```
+
+### Visualize Population Data
+```{r vis-pop}
+# subset data to only contain last 10 years
+last10years <- census %>%
+  filter(year <= 2010 & year >= 2001) %>%
+  # group data
+  group_by(country) %>%
+  # calculate growth rate
+  mutate(growth_rate = (population/lag(population, 1)) - 1)
+
+# top 5 countries by population in 2010
+top5countries <- census %>%
+  filter(year == 2010) %>%
+  arrange(desc(population)) %>%
+  head(5)
+
+# inner join to only get the top 5 countries' data
+top5last10years <- inner_join(last10years, top5countries, by = "country") %>%
+  select(1:4) %>%
+  rename(year = year.x,
+         population = population.x)
+
+# create lineplot of growth rates
+ggplot(top5last10years, aes(x = year, y = growth_rate, color = country, group = country)) +
+  geom_line() +
+  scale_y_continuous(labels = scales::percent)
+```
+
+### Conclusions
+  * Of the top 5 countries in population, all of the countries except for the US were trending downwards in growth over the course of 10 years
+  * India experienced the most consistently highest growth rate over the course of the 10 year span
+  * China experienced the lowest growth rate consistently by a wide margin over the 10 year span
