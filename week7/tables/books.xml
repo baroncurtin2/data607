@@ -4,10 +4,7 @@
         <category>Textbook</category>
         <title>Automated Data Collection with R: A Practical Guide to Web Scraping and Text Mining</title>
         <authors>
-            <author>Munzert,Simon</author>
-            <author>Rubba,Christian</author>
-            <author>Meißner,Peter</author>
-            <author>Nyhuis,Dominic</author>
+            Munzert,Simon; Rubba,Christian; Meißner,Peter; Nyhuis,Dominic
         </authors>
         <isbn_13>978-1118834817</isbn_13>
         <page_count>474</page_count>
@@ -18,8 +15,7 @@
         <category>Textbook</category>
         <title>Text Mining with R: A Tidy Approach</title>
         <authors>
-            <author>Silge,Julia</author>
-            <author>Robinson,David</author>
+            Silge,Julia; Robinson,David
         </authors>
         <isbn_13>978-1491981658</isbn_13>
         <page_count>194</page_count>
@@ -30,8 +26,7 @@
         <category>Textbook</category>
         <title>R for Data Science: Import, Tidy, Transform, Visualize, and Model Data</title>
         <authors>
-            <author>Wickham,Hadley</author>
-            <author>Grolemund,Garrett</author>
+            Wickham,Hadley; Grolemund,Garrett
         </authors>
         <isbn_13>978-1491910399</isbn_13>
         <page_count>522</page_count>

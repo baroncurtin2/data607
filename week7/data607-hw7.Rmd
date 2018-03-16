@@ -26,10 +26,14 @@ library(kableExtra)
 
 ### XML
 ```{r xml}
-x <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.xml")
+x <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.xml") %>%
+  xmlParse() %>%
+  xmlToDataFrame(stringsAsFactors = FALSE) %>%
+  data.frame
 
 # show table
-#knitr::kable(x)
+knitr::kable(x, "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
 
 
@@ -48,10 +52,11 @@ knitr::kable(h, "html")%>%
 ### JSON
 ```{r json}
 j <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.json") %>%
-  fromJSON(flatten = TRUE, simplifyDataFrame = TRUE) %>%
+  fromJSON %>%
   data.frame
 
 # show table
-knitr::kable(j)
+knitr::kable(j, "html")%>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
 
