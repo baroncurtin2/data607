@@ -13,9 +13,31 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r env,include=FALSE}
+library(plyr)
 library(tidyverse)
 library(magrittr)
 library(RCurl)
+library(XML)
 ```
 
+## Books Data {.tabset .tabset-fade .tabset-pills}
+
+### XML
+```{r xml}
+x <- getUrl("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.xml")
+```
+
+
+### HTML
+```{r html}
+h <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.html") %>%
+  read_htm
+
+```
+
+
+### JSON
+```{r json}
+j <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.json")
+```
 

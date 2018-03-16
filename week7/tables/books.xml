@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <books>
-    <!-- book1 -->
     <book>
         <category>Textbook</category>
         <title>Automated Data Collection with R: A Practical Guide to Web Scraping and Text Mining</title>
@@ -15,7 +14,6 @@
         <publisher>Wiley</publisher>
         <edition>1</edition>
     </book>
-    <!-- book2 -->
     <book>
         <category>Textbook</category>
         <title>Text Mining with R: A Tidy Approach</title>
@@ -28,7 +26,6 @@
         <publisher>O'reilly Media</publisher>
         <edition>1</edition>
     </book>
-    <!-- book3 -->
     <book>
         <category>Textbook</category>
         <title>R for Data Science: Import, Tidy, Transform, Visualize, and Model Data</title>
