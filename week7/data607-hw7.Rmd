@@ -18,26 +18,37 @@ library(tidyverse)
 library(magrittr)
 library(RCurl)
 library(XML)
+library(jsonlite)
 ```
 
 ## Books Data {.tabset .tabset-fade .tabset-pills}
 
 ### XML
 ```{r xml}
-x <- getUrl("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.xml")
+x <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.xml")
+
+# show table
+#knitr::kable(x)
 ```
 
 
 ### HTML
 ```{r html}
 h <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.html") %>%
-  read_htm
+  htmlParse
 
+# show table
+#knitr::kable(h)
 ```
 
 
 ### JSON
 ```{r json}
-j <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.json")
+j <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.json") %>%
+  fromJSON %>%
+  data_frame
+
+# show table
+knitr::kable(j)
 ```
 
