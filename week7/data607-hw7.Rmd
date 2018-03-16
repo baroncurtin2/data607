@@ -19,6 +19,7 @@ library(magrittr)
 library(RCurl)
 library(XML)
 library(jsonlite)
+library(kableExtra)
 ```
 
 ## Books Data {.tabset .tabset-fade .tabset-pills}
@@ -35,18 +36,20 @@ x <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7
 ### HTML
 ```{r html}
 h <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.html") %>%
-  htmlParse
+  readHTMLTable(header = TRUE, which = 1) %>%
+  tbl_df
 
 # show table
-#knitr::kable(h)
+knitr::kable(h, "html")%>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
 
 
 ### JSON
 ```{r json}
 j <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week7/tables/books.json") %>%
-  fromJSON %>%
-  data_frame
+  fromJSON(flatten = TRUE, simplifyDataFrame = TRUE) %>%
+  data.frame
 
 # show table
 knitr::kable(j)
