@@ -1,0 +1,137 @@
+---
+title: "Data 607 - Project 4"
+author: "Baron Curtin"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+
+libs <- c("tidyverse", "magrittr", "tidytext", "R.utils", "knitr", "kableExtra")
+lapply(libs, require, character.only = TRUE)
+```
+
+## Download Files
+```{r dload}
+url <- 'http://spamassassin.apache.org/old/publiccorpus/'
+spamZip <- '20050311_spam_2.tar.bz2'
+hamZip <- '20030228_hard_ham.tar.bz2'
+
+
+# download function
+dloadBZ2 <- function(baseURL = NULL, bz2 = NULL) {
+  # full URL
+  fullUrl <- paste(baseURL, bz2, sep = '')
+  
+  # detination
+  destFolder <- './spamham/'
+  saveTo <- paste(destFolder, bz2, sep = '')
+  
+  # download file
+  if (!file.exists(saveTo)) download.file(fullUrl, destfile = saveTo)
+  
+  # return downloaded file
+  return(saveTo)
+}
+
+# download files
+spamZip <- dloadBZ2(url, spamZip)
+hamZip <- dloadBZ2(url, hamZip)
+```
+
+
+## Unzipping Spam and Ham Files
+```{r unzip}
+# functions to decompress files
+decompress <- function(zipFile = NULL) {
+  # get list of files
+  files <- zipFile %>%
+    bunzip2(overwrite = T, remove = F) %>%
+    str_replace(pattern = ".bz2", replacement = "") %>%
+    untar(compressed = "bzip2", list = T)
+  
+  # untar files
+  zipFile %>%
+    str_replace(pattern = ".bz2", replacement = "") %>%
+    untar(compressed = "bzip2", exdir = "./spamham/")
+  
+  # return list of files
+  return(files)
+}
+
+# decompress zipfiles
+spamList <- decompress(spamZip)
+hamList <- decompress(hamZip)
+```
+
+## Get File Names
+```{r filenames}
+# function to get file names
+getFileNames <- function(list = NULL) {
+  # replace prefixed file, trim, and keep only relevant files
+  names <- list %>%
+    # remove the useless files from list
+    keep(function(x) nchar(x) > 40) %>%
+    # get full file path
+    map(function(x) str_c("./spamham/", x, collapse = '')) %>%
+    # trim for cleanliness :)
+    str_trim()
+  
+  # return file names
+  return(names)
+}
+
+spamFiles <- getFileNames(spamList)
+hamFiles <- getFileNames(hamList)
+```
+
+## Get the Contents of Files
+```{r contents}
+# function to get contents
+getFileContents <- function(files = NULL) {
+  # reduce file list to single df
+  files %>%
+    reduce(.f = function(df, myFile) {
+      # read lines into data frame
+      lines <- read_lines(con)
+      names(lines) <- "content"
+
+      # bind rows to df
+      df <- bind_rows(df, lines)
+      return(df)
+    }, .init = data_frame())
+}
+
+spam <- getFileContents(spamFiles)
+ham <- getFileContents(hamFiles)
+```
+
+```{r}
+test <- spamFiles %>%
+  reduce(.f = function(df, myFile) {
+      # get file connection
+      #con <- file(myFile, "r", blocking = F)
+      
+      # read lines into data frame
+      lines <- read_lines(myFile)
+      names(lines) <- "content"
+      
+      # close connection
+      # close(con)
+      
+      # bind rows to df
+      df <- bind_rows(df, lines)
+      return(df)
+    }, .init = data_frame())
+```
+
+
+
+
