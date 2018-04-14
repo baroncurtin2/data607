@@ -14,15 +14,17 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(tidy = TRUE)
 knitr::opts_chunk$set(warning = FALSE)
 
-libs <- c("tidyverse", "magrittr", "tidytext", "R.utils", "knitr", "kableExtra")
+libs <- c("tidyverse", "magrittr", "tidytext", "R.utils", "tm", "RTextTools", "knitr", "kableExtra")
 lapply(libs, require, character.only = TRUE)
 ```
 
 ## Download Files
+First step is to procure the spam and ham files. Accomplished using download.file.  
+
 ```{r dload}
 url <- 'http://spamassassin.apache.org/old/publiccorpus/'
 spamZip <- '20050311_spam_2.tar.bz2'
-hamZip <- '20030228_hard_ham.tar.bz2'
+hamZip <- '20030228_easy_ham.tar.bz2'
 
 
 # download function
@@ -48,6 +50,8 @@ hamZip <- dloadBZ2(url, hamZip)
 
 
 ## Unzipping Spam and Ham Files
+The files must be unzipped after downloading.  
+
 ```{r unzip}
 # functions to decompress files
 decompress <- function(zipFile = NULL) {
@@ -72,6 +76,8 @@ hamList <- decompress(hamZip)
 ```
 
 ## Get File Names
+This section is to create a list of all the file names in the zip files.
+
 ```{r filenames}
 # function to get file names
 getFileNames <- function(list = NULL) {
@@ -92,45 +98,224 @@ spamFiles <- getFileNames(spamList)
 hamFiles <- getFileNames(hamList)
 ```
 
-## Get the Contents of Files
-```{r contents}
-# function to get contents
-getFileContents <- function(files = NULL) {
-  # reduce file list to single df
-  files %>%
-    reduce(.f = function(df, myFile) {
-      # read lines into data frame
-      lines <- read_lines(con)
-      names(lines) <- "content"
+#### Preliminary Results:
+Spam Emails: `r length(spamFiles)`  
 
-      # bind rows to df
-      df <- bind_rows(df, lines)
-      return(df)
-    }, .init = data_frame())
+Ham Emails: `r length(hamFiles)`  
+
+Total Emails: `r length(spamFiles) + length(hamFiles)`
+
+## Get the Contents of Files
+In this section, we will create a single data frame of all our results. The headers will be word, count, filename, email type (ham or spam). This data frame will then power the rest of the visualizations and analysis.
+```{r contents}
+## load stop words so that they can be removed from each set of data.
+data(stop_words)
+
+# function to clean and tidy the data
+cleanTidy <- function(file = NULL, type = NULL) {
+  lines <- file %>%
+    # read lines from email
+    read_lines %>%
+    # put lines into dataframe
+    data_frame(text = .) %>%
+    # get every individual word in email
+    unnest_tokens(word, text) %>%
+    # remove stop words
+    anti_join(stop_words, by = "word") %>%
+    # count the remaining words
+    count(word, sort = T) %>%
+    # add additional columns that could potentially help later
+    mutate(filename = str_replace(file, "^\\./spamham/.+/", ""),
+           email_type = type,
+           word = as.character(word)) %>%
+    # rename n to count
+    rename(count = n)
 }
 
-spam <- getFileContents(spamFiles)
-ham <- getFileContents(hamFiles)
+merge_df <- function(df, x, type = NULL) {
+  # read lines and convert to data frame
+  lines <- cleanTidy(x, type)
+
+  # merge dfs
+  return(bind_rows(df, lines))
+}
+
+# function to get contents
+getFileContents <- function(files = NULL, type = NULL) {
+  # reduce file list to single df
+  files %>%
+    reduce(merge_df, .init = data_frame(word = character(0), count = integer(0), 
+                                        filename = character(0), email_type = character(0)), type = type)
+}
+
+spam <- getFileContents(spamFiles, "spam")
+ham <- getFileContents(hamFiles, "ham")
+```
+
+## Summary Statistics on Each Dataset
+
+#### HAM Summary
+```{r hsummary}
+hsummary <- ham %>%
+  group_by(filename) %>%
+  summarise(email_length = sum(count),
+            unique_words = n_distinct(word)) %>%
+  arrange(desc(unique_words))
+
+hsummary %>%
+  head(10)
+```
+
+More statistics summarizing HAM data
+```{r hammore}
+hsummary %>%
+  select(2:3) %>%
+  summary()
+```
+
+
+
+#### SPAM Summary
+```{r ssummary}
+ssummary <- spam %>%
+  group_by(filename) %>%
+  summarise(email_length = sum(count),
+            unique_words = n_distinct(word)) %>%
+  arrange(desc(unique_words)) 
+
+ssummary %>%
+  head(10)
+```
+
+More statistics summarizing SPAM data
+```{r spammore}
+ssummary %>%
+  select(2:3) %>%
+  summary()
+```
+
+Across both metrics, SPAM emails typically have more unique words, and are generally longer in length.
+
+#### Visualizations
+```{r vis}
+ham %>%
+  select(word:count) %>%
+  group_by(word) %>%
+  summarise(word_count = sum(count)) %>%
+  filter(!str_detect(word, '[[:punct:][:digit:]]')) %>%
+  mutate(word = reorder(word, word_count)) %>%
+  head(10) %>%
+  ggplot(aes(word, word_count)) +
+  geom_col() +
+  xlab("Ham") +
+  coord_flip()
 ```
 
 ```{r}
-test <- spamFiles %>%
-  reduce(.f = function(df, myFile) {
-      # get file connection
-      #con <- file(myFile, "r", blocking = F)
-      
-      # read lines into data frame
-      lines <- read_lines(myFile)
-      names(lines) <- "content"
-      
-      # close connection
-      # close(con)
-      
-      # bind rows to df
-      df <- bind_rows(df, lines)
-      return(df)
-    }, .init = data_frame())
+spam %>%
+  select(word:count) %>%
+  group_by(word) %>%
+  summarise(word_count = sum(count)) %>%
+  filter(!str_detect(word, '[[:punct:][:digit:]]')) %>%
+  mutate(word = reorder(word, word_count)) %>%
+  head(10) %>%
+  ggplot(aes(word, word_count)) +
+  geom_col() +
+  xlab("Spam") +
+  coord_flip()
 ```
+
+From the graphs, you can see there is a lot of jibberihs is a typical spam email.
+
+## Training
+
+#### Create different datasets for training/testing
+```{r training}
+# function to create datasets
+contentGetter <- function(file = NULL, type = NULL) {
+  lines <- file %>%
+    # read lines from email
+    read_lines %>%
+    # collapse email
+    str_c(collapse = "") %>%
+    # put lines into dataframe
+    data_frame(text = .) %>%
+    # add email type
+    mutate(type = type)
+}
+
+whole_df <- function(df, x, type = NULL) {
+  # read lines and convert to data frame
+  lines <- contentGetter(x, type)
+
+  # merge dfs
+  return(bind_rows(df, lines))
+}
+
+# function to get contents
+getWholeContents <- function(files = NULL, type = NULL) {
+  # reduce file list to single df
+  files %>%
+    reduce(whole_df, .init = data_frame(text = character(0), type = character(0)), type = type)
+}
+
+spamWhole <- getWholeContents(spamFiles, "spam")
+hamWhole <- getWholeContents(hamFiles, "spam")
+```
+
+
+#### Set up training/test data
+```{r}
+# divide test and training 75/25
+emails <- bind_rows(spamWhole, hamWhole)
+randomEmails <- emails[sample(nrow(emails)), ]
+trainLength <- nrow(randomEmails) * .75
+
+trainEmails <- randomEmails[1:trainLength, ]
+testEmails <- randomEmails[(trainLength + 1):nrow(randomEmails), ]
+```
+
+#### Term Document Matrix
+```{r}
+fullTTData <- bind_rows(trainEmails, testEmails) %>%
+  mutate(type = if_else(type == 'spam', 1, 0)) %>%
+  as.data.frame()
+fullTTTypes <- fullTTData$type
+fullTTMsg <- fullTTData$text
+
+# create matrix
+matrix <- create_matrix(fullTTMsg,
+                      language = "english", 
+                      minWordLength = 3, 
+                      removeNumbers = TRUE, 
+                      stemWords = FALSE, 
+                      removePunctuation = TRUE)
+
+
+# create container
+container <- create_container(matrix, 
+                              t(factor(fullTTTypes)),
+                              trainSize = 1:trainLength,
+                              testSize = (trainLength + 1):(nrow(fullTTData)),
+                              virgin = F)
+```
+
+
+#### Model
+```{r}
+model <- train_model(container, "SVM")
+result <- classify_model(container, model)
+analytics <- create_analytics(container, result)
+
+# document summary
+docsum <- analytics@document_summary
+
+```
+
+
+
+
+
 
 
 
