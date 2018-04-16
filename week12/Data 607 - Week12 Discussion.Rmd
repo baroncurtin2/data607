@@ -1,0 +1,30 @@
+---
+title: "Data 607 - Week12 Discussion"
+author: "Baron Curtin"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Questions {.tabset .tabset-fade .tabset-pills}
+
+### Perform a Scenario Design analysis as described below.  Consider whether it makes sense for your selected recommender system to perform scenario design twice, once for the organization (e.g. Amazon.com) and once for the organization's customers.  
+
+
+Pandora/Spotify are two music streaming platforms that utilize recommender systems to select and play the next track a user hears. Their target users are anyone that enjoys listening to music. Their subscription model includes free, free trial of paid services, and paid subscribers. Anyone using their product is part of their target audience. The key goals of the recommender system is to continually provide the user with songs/music that they want to listen to. The user does so my clicking a "thumbs-up" button. This indicates to the system that there is something about the song that the user likes. The recommender system will then take the meta-data of the song, including but not limited to, artist name, genre, track BPM, to come up with other songs that fit the profile. As the user provides more and more "thumbs-up", the recommender system will get better at picking songs. It is always good to assess both sides of the equation as that is generally how the requirements of both sides are met.
+
+### Attempt to reverse engineer what you can about the site, from the site interface and any available information that you can find on the Internet or elsewhere.  
+
+https://computer.howstuffworks.com/internet/basics/pandora.htm
+Pandora Radio uses the 400 musical attributes of a song to determine what kind of music the user likes. The more a user provides a thumbs-up or thumbs-down, the more refined the station will become. Providing a thumbs-down will never play that track again on your radio station. As more and more feedback is provided, the user will eventually reach a state where the station will only play the music that the user wants to hear.
+
+
+### Include specific recommendations about how to improve the site's recommendation capabilities going forwar.  
+Ways Pandora could be improved is to provide the ability to add tracks to a station. Generally a station will be a single genre. Some users would like to be able to provide a mix of genres in one station for the occassional switch-up.
