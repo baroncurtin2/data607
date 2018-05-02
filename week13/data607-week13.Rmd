@@ -1,0 +1,35 @@
+---
+title: "Data 607 - Week13"
+author: "Baron Curtin"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+
+libs <- c("tidyverse", "magrittr", "knitr", "kableExtra", "mongolite", "RMySQL", "DBI", "RJDBC")
+
+loadPkg <- function(x) {
+  if(!require(x, character.only = T)) install.packages(x, dependencies = T)
+  require(x, character.only = T)
+}
+
+lapply(libs, loadPkg)
+```
+
+
+### Load Data into Mongo
+We can just use some of the sample data that comes with the Tidyverse package.
+
+```{r}
+url <- "mongodb://bacurtin2:ih3VBt29@data607-shard-00-00-hbxuz.mongodb.net:27017,data607-shard-00-01-hbxuz.mongodb.net:27017,data607-shard-00-02-hbxuz.mongodb.net:27017/test?ssl=true&replicaSet=Data607-shard-0&authSource=admin"
+mongo <- mongo(collection = "mtcars", db = "week13", url = url)
+```
+
