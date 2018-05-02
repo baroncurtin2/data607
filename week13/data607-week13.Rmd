@@ -29,7 +29,46 @@ lapply(libs, loadPkg)
 We can just use some of the sample data that comes with the Tidyverse package.
 
 ```{r}
+# mongo url
 url <- "mongodb://bacurtin2:ih3VBt29@data607-shard-00-00-hbxuz.mongodb.net:27017,data607-shard-00-01-hbxuz.mongodb.net:27017,data607-shard-00-02-hbxuz.mongodb.net:27017/test?ssl=true&replicaSet=Data607-shard-0&authSource=admin"
-mongo <- mongo(collection = "mtcars", db = "week13", url = url)
+
+# mongoDB object
+m <- mongo(collection = "mtcars", db = "week13", url = url)
+
+# upload sample data
+m$remove("{}")
+m$insert(mtcars)
+
+# verify row count
+nrow(mtcars)
+m$count()
+
+# print data from mongo
+carsData <- m$find('{}') %>%
+  print
+
+# clear data for next set
+m$remove("{}")
 ```
+
+#### Upload Diamonds Dataset
+```{r}
+# mongoDB object
+m <- mongo(collection = "diamonds", db = "week13", url = url)
+
+# upload sample data
+m$insert(diamonds)
+
+# verify row count
+nrow(diamonds)
+m$count()
+
+# print data from mongo
+diaData <- m$find('{}') %>%
+  print
+
+# clear data for next set
+m$remove("{}")
+```
+
 
