@@ -1,0 +1,62 @@
+---
+title: "Data 607 - Final Project"
+author: "Baron Curtin"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+
+libs <- c("tidyverse", "magrittr", "knitr", "kableExtra", "mongolite", "jsonlite", "RMySQL", "DBI", "RJDBC")
+
+loadPkg <- function(x) {
+  if(!require(x, character.only = T)) install.packages(x, dependencies = T)
+  require(x, character.only = T)
+}
+
+lapply(libs, loadPkg)
+```
+
+### Proposal
+My original proposal was to analyze build orders in a video game called *Halo Wars 2*, but in the interest of timing and completion, I decided against my original proposal and switch gears to determine which state has the worst drivers. As a driver myself, I often come across other drivers that just seem to be doing things wrongly. As frustrating as it can be on the road here in NY, I am led to believe that there must be other states with worse drivers. As a frequent traveler, I feel comfortable saying that I have seen some of the worst drivers in the world.
+
+
+### Data Acquisition
+The bad drivers dataset can be procured directly from the FiveThirtEight GitHub repo. We will use readr's read_csv function to parse the csv directly into a tibble.
+```{r data-csv}
+# bad drivers data
+badDrivers <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/bad-drivers/bad-drivers.csv") %>%
+  rename_all(funs(str_to_lower(.)))
+```
+```{r data-mongo}
+# mongoURL
+url <- "mongodb://bacurtin2:ih3VBt29@data607-shard-00-00-hbxuz.mongodb.net:27017,data607-shard-00-01-hbxuz.mongodb.net:27017,data607-shard-00-02-hbxuz.mongodb.net:27017/test?ssl=true&replicaSet=Data607-shard-0&authSource=admin"
+
+# temp regionMap
+regionMap <- read_csv("https://raw.githubusercontent.com/baroncurtin2/data606/master/project/data/region_mapping.csv") %>%
+  rename_all(funs(str_to_lower(.)))
+
+# temporary upload
+mDB <- mongo(collection = "regionMappings", db = "project", url = url)
+mDB$remove("{}")
+m$insert(toJSON(regionMap))
+
+# download
+regionMap <- mDB$find("{}")
+```
+
+
+
+
+### Data Cleaning
+
+
+
+### Data Analysis
