@@ -225,7 +225,7 @@ spam %>%
   coord_flip()
 ```
 
-From the graphs, you can see there is a lot of jibberihs is a typical spam email.
+From the graphs, you can see there is a lot of jibberish is a typical spam email.
 
 ## Training
 
@@ -303,12 +303,12 @@ container <- create_container(matrix,
 
 #### Model
 ```{r}
-model <- train_model(container, "SVM")
-result <- classify_model(container, model)
-analytics <- create_analytics(container, result)
+# model <- train_model(container, "SVM")
+# result <- classify_model(container, model)
+# analytics <- create_analytics(container, result)
 
 # document summary
-docsum <- analytics@document_summary
+# docsum <- analytics@document_summary
 
 ```
 
