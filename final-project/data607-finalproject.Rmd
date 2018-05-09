@@ -35,20 +35,13 @@ The bad drivers dataset can be procured directly from the FiveThirtEight GitHub 
 badDrivers <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/bad-drivers/bad-drivers.csv") %>%
   rename_all(funs(str_to_lower(.)))
 ```
+
 ```{r data-mongo}
 # mongoURL
 url <- "mongodb://bacurtin2:ih3VBt29@data607-shard-00-00-hbxuz.mongodb.net:27017,data607-shard-00-01-hbxuz.mongodb.net:27017,data607-shard-00-02-hbxuz.mongodb.net:27017/test?ssl=true&replicaSet=Data607-shard-0&authSource=admin"
 
-# temp regionMap
-regionMap <- read_csv("https://raw.githubusercontent.com/baroncurtin2/data606/master/project/data/region_mapping.csv") %>%
-  rename_all(funs(str_to_lower(.)))
-
-# temporary upload
-mDB <- mongo(collection = "regionMappings", db = "project", url = url)
-mDB$remove("{}")
-m$insert(toJSON(regionMap))
-
 # download
+mDB <- mongo(collection = "regionMappings", db = "project", url = url)
 regionMap <- mDB$find("{}")
 ```
 
