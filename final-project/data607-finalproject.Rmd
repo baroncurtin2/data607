@@ -36,6 +36,7 @@ badDrivers <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/m
   rename_all(funs(str_to_lower(.)))
 ```
 
+The following code will retrive data from my MongoDB Atlas account through their Cloud API
 ```{r data-mongo}
 # mongoURL
 url <- "mongodb://bacurtin2:ih3VBt29@data607-shard-00-00-hbxuz.mongodb.net:27017,data607-shard-00-01-hbxuz.mongodb.net:27017,data607-shard-00-02-hbxuz.mongodb.net:27017/test?ssl=true&replicaSet=Data607-shard-0&authSource=admin"
@@ -45,11 +46,106 @@ mDB <- mongo(collection = "regionMappings", db = "project", url = url)
 regionMap <- mDB$find("{}")
 ```
 
-
-
-
 ### Data Cleaning
+After acquiring the data, it is often that it would need to be cleaned. Those processes will be described and performed below.
+```{r cleaning}
+bdData <- badDrivers %>%
+  # join badDrivers to regionMap
+  left_join(regionMap, by = "state") %>%
+  # rename columns for easier reference
+  rename(driver_fatalities = "number of drivers involved in fatal collisions per billion miles",
+         speeding_percent = "percentage of drivers involved in fatal collisions who were speeding",
+         alcohol_percent = "percentage of drivers involved in fatal collisions who were alcohol-impaired",
+         not_distracted_percent = "percentage of drivers involved in fatal collisions who were not distracted",
+         no_prior_accident_percent = "percentage of drivers involved in fatal collisions who had not been involved in any previous accidents",
+         insurance_premiums = "car insurance premiums ($)",
+         insuranceco_losses = "losses incurred by insurance companies for collisions per insured driver ($)") %>%
+  # reorder columns
+  select(1, 9:11, 2:8)
 
+```
 
 
 ### Data Analysis
+
+#### Exploratory Analysis
+It is generally accepted practice to "peek" at the structure of the data before going into full blown analysis.
+```{r explo}
+str(bdData)
+summary(bdData)
+```
+
+Lets have a look at the distribution of driver fatalities
+```{r}
+hist(bdData$driver_fatalities)
+```
+Using R's base graphics, we can see that the distribution of fatalities is bi-modal, slightly skewed left, and follows somewhat of a normal distribution. The outlier appears to be Washington DC. We can retroactively remove DC from the dataset.
+
+```{r}
+bdData2 <- bdData %>%
+  filter(`state code` != "DC")
+
+hist(bdData2$driver_fatalities)
+```
+After removing DC, we certainly have a more normal distribution despite the bi-modality. Lets have a look at insurance premiums.
+
+```{r}
+hist(bdData2$insurance_premiums)
+```
+This graph is very interesting. It is most certainly skewed right and unimodal. With a basic understanding of the data now, we can perform real analysis.
+
+#### Analysis
+Since we have included some categorical variables in the dataset, we can do some analysis on the region that experiences the most fatalities.
+
+```{r}
+ggplot(bdData2, aes(x = region, y = driver_fatalities, fill = region)) +
+  geom_boxplot() +
+  labs(x = "Region", y = "Driver Fatalities", title = "Region vs. Driver Fatalities", fill = "")
+```
+The side-by-side boxplots show a grim view of Southern drivers. The Southern region by far has the highest median, and its Q1 is higher than both the Midwest's and the Northeast's Q3 value, just from eyeballing the graph. We can also view this data in a scatterplot.
+
+```{r}
+ggplot(bdData2, aes(x = driver_fatalities, y = insurance_premiums, col = region)) +
+  geom_jitter(alpha = .8) +
+  geom_smooth(method = "lm") +
+  facet_grid(. ~ region) +
+  labs(x = "Driver Fatalities", y = "Insurance Premiums", title = "Driver Fatalities vs. Insurance Premiums", col = "")
+```
+This graph has some very interesting revelations. In three of the regions, there is a negative relationship between driver fatalities and insurance premiums. Only Western states experience increasing premiums with increasing driver fatalities. This graph also illuminates the regions with the highest premiums being the Northeast and the South. Northeast has higher premiums despite bring lower in driver fatalities.
+
+Lets get a little more robust and create a linear model of driver fatalities.
+```{r}
+model <- lm(driver_fatalities ~ region + speeding_percent + alcohol_percent + not_distracted_percent + no_prior_accident_percent + insurance_premiums + insuranceco_losses, data = bdData2)
+summary(model)
+```
+Since we have an Adjusted R-squared of only .3168, we will attempt to remove some variables from the model in order to get a better predictor.
+
+```{r}
+model <- lm(driver_fatalities ~ region + alcohol_percent + insuranceco_losses, data = bdData2)
+summary(model)
+```
+The best adjusted R-squared we could get from this set of variables is .3605. This indicates that there are variables not in this dataset that influence driver fatalities. The other piece of information we can garner from the model is that regionSouth has the greatest impact on driver_fatalities. This would seem to indicate that Southern drivers are the worst drivers. Another interesting fact is that it would appear Northeast drivers are the best. Their negative coefficient indicates that being from the Northeast actually reduces the driver fatality figure.
+
+The last few analyses will focus on speed, drinking, and distraction.
+```{r}
+ggplot(bdData2, aes(x = speeding_percent)) +
+  geom_histogram(binwidth = 4) +
+  facet_grid(. ~ region)
+
+ggplot(bdData2, aes(x = alcohol_percent)) +
+  geom_histogram(binwidth = 4) +
+  facet_grid(. ~ region)
+
+ggplot(bdData2, aes(x = not_distracted_percent)) +
+  geom_histogram(binwidth = 4) +
+  facet_grid(. ~ region)
+```
+
+All three of these graphs show that Southern drivers experience the most driver fatalities in all the different scenarios.
+
+### Conclusion
+Based on statistical evidence, Southern drivers are the worst driver in the US
+
+
+
+
