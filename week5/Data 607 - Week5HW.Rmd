@@ -1,0 +1,82 @@
+---
+title: "Data 607 - Week5HW"
+author: "Baron Curtin"
+date: "February 27, 2018"
+output:
+  html_document:
+    toc: TRUE
+    toc_float:  TRUE
+    code_folding: "show"
+    number_sections: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy = TRUE)
+```
+
+## Environment Setup
+```{r env, results='hide'}
+library(tidyverse)
+library(magrittr)
+library(data.table)
+library(RCurl)
+```
+
+## Load CSV
+```{r csv}
+csv <- getURL("https://raw.githubusercontent.com/baroncurtin2/data607/master/week5/week5.csv")
+data <- fread(csv, header = TRUE, sep = ",", fill = TRUE, stringsAsFactors = FALSE) %>%
+  # omit row with NAs
+  na.omit %>%
+  tbl_df %>%
+  print
+```
+
+## Tidy Data
+```{r tidydata}
+tidy <- data %>%
+  # lets rename the V1 and V2 columns to something sensible
+  rename(carrier = V1, status = V2)
+
+# replicate ALASKA and AM WEST for the blank rows in carrier
+tidy[2, 1] <- "ALASKA"
+tidy[4, 1] <- "AM WEST"
+
+# apply tidyr principles of every variable being a column and every observation a row
+tidy <- tidy %>%
+  # gather the city columns into one column called destination, values are the flight counts
+  gather(destination, flight_count, "Los Angeles":Seattle) %>%
+  # spread flight status into two columns
+  spread(status, flight_count) %>%
+  # rename 'on time' to ontime
+  rename(ontime = `on time`) %>%
+  print
+```
+
+## Data Analysis
+```{r dataanalysis}
+tidy <- tidy %>%
+  # add a column for total flights and calculate delayed ratio
+  mutate(total_flights = delayed + ontime,
+         delayed_ratio = delayed / total_flights) %>%
+  # arrange table
+  arrange(carrier, destination) %>%
+  print
+```
+
+## Data Visualization
+```{r visuals}
+ggplot(tidy, aes(x = destination, y = delayed_ratio, group = carrier, color = destination, shape = carrier)) +
+  geom_point(aes(shape = carrier)) +
+  geom_line() +
+  labs(x = "City", y = "Delayed %")
+
+```
+
+## Conclusion
+From the visual, we can see that AM West is the poorer performer when it comes to delays, however since the lines are very similar in shape, it is likely that these destinations are also partly to blame for the delays. ALASKA also performed better at every city compared to AM WEST.
+
+
+
+
